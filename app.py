@@ -12,7 +12,7 @@ le = joblib.load("label_encoder.pkl")
 
 @app.get("/")
 def home():
-    return {"message": "Emotion Recognition API is running"}
+    return {"message": "Emotion API CI/CD RADiii"}
 
 
 @app.post("/predict")
