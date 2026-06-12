@@ -1,6 +1,15 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
 import joblib
 import numpy as np
+import time
+import logging
+
+# ---------------- LOGGING ----------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 app = FastAPI()
 
@@ -10,26 +19,41 @@ scaler = joblib.load("scaler.pkl")
 le = joblib.load("label_encoder.pkl")
 
 
+class InputData(BaseModel):
+    features: list[float]
+
+
 @app.get("/")
 def home():
-    return {"message": "Emotion API CI/CD secret test"}
+    return {"message": "Emotion API CI/CD with logging is running"}
 
 
 @app.post("/predict")
-def predict(features: list):
+def predict(data: InputData):
 
-    # pretvaranje inputa
+    start_time = time.time()
+
+    logging.info("New prediction request received")
+
+    # input
+    features = data.features
+    logging.info(f"Input size: {len(features)} features")
+
+    # preprocessing
     X = np.array(features).reshape(1, -1)
-
-    # scaling (ISTO kao training)
     X = scaler.transform(X)
 
     # prediction
     pred = model.predict(X)
-
-    # decode label
     emotion = le.inverse_transform(pred)
 
+    end_time = time.time()
+    duration = end_time - start_time
+
+    logging.info(f"Prediction completed in {duration:.4f} seconds")
+    logging.info(f"Predicted emotion: {emotion[0]}")
+
     return {
-        "emotion": emotion[0]
+        "emotion": emotion[0],
+        "prediction_time_sec": round(duration, 4)
     }
